@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Радио</string>
+
+    <!-- Data error massage -->
+    <string name="error_radio_json_not_found">Файл с радио не найден</string>
+    <string name="error_radio_by_title_not_found">Радио с таким названием не найдена</string>
+
+    <!-- ExoPlayer error massage -->
+    <string name="error_no_internet_access">Нет доступа в Интернет</string>
+    <string name="error_radio_station_connection_timeout">Потерян доступ к радо станции</string>
+    <string name="error_file_not_found">Такого файла не существует</string>
+    <string name="error_radio_station_unavailable">Радио станция недоступна</string>
+
+    <string name="error_unknown">Что-то пошло не так</string>
+
+    <!-- Content description -->
+    <string name="error_message">Error message</string>
+    <string name="button_play_pause">Button play pause</string>
+</resources>
