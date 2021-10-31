@@ -1,11 +1,11 @@
-package com.example.radioplayer.ui.screens.radio
+package com.example.radioplayer.ui.screen.list
 
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import com.example.radioplayer.util.state.UiState
-import com.example.radioplayer.ui.screens.radio.views.RadioListDisplay
-import com.example.radioplayer.ui.screens.component.ErrorMessage
-import com.example.radioplayer.ui.screens.component.Loading
+import com.example.radioplayer.ui.screen.list.view.RadioListDisplay
+import com.example.radioplayer.ui.screen.view.ErrorMessage
+import com.example.radioplayer.ui.screen.view.Loading
 import com.example.radioplayer.viewmodel.RadioViewModel
 
 @Composable

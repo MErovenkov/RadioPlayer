@@ -1,12 +1,12 @@
-package com.example.radioplayer.ui.screens.exoplayer
+package com.example.radioplayer.ui.screen.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import com.example.radioplayer.util.state.UiState
-import com.example.radioplayer.ui.screens.exoplayer.views.RadioPlayerDisplay
-import com.example.radioplayer.ui.screens.component.ErrorMessage
-import com.example.radioplayer.ui.screens.component.Loading
+import com.example.radioplayer.ui.screen.player.view.RadioPlayerDisplay
+import com.example.radioplayer.ui.screen.view.ErrorMessage
+import com.example.radioplayer.ui.screen.view.Loading
 import com.example.radioplayer.viewmodel.DetailRadioViewModel
 
 @Composable

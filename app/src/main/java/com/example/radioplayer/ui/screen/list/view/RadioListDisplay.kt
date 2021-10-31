@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.radio.views
+package com.example.radioplayer.ui.screen.list.view
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn

@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.exoplayer.views
+package com.example.radioplayer.ui.screen.player.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

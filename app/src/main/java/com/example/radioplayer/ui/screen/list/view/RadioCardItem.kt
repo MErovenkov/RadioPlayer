@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.radio.views
+package com.example.radioplayer.ui.screen.list.view
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

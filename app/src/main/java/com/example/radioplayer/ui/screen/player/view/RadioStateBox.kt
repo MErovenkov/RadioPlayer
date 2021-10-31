@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.exoplayer.views
+package com.example.radioplayer.ui.screen.player.view
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.radioplayer.R
 import com.example.radioplayer.util.state.PlayerState
-import com.example.radioplayer.ui.screens.component.ErrorMessage
-import com.example.radioplayer.ui.screens.component.Loading
+import com.example.radioplayer.ui.screen.view.ErrorMessage
+import com.example.radioplayer.ui.screen.view.Loading
 import com.example.radioplayer.ui.theme.MainTheme
 import com.example.radioplayer.util.CheckStatusNetwork
 import com.google.android.exoplayer2.PlaybackException

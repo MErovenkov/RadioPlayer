@@ -5,8 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.radioplayer.di.activity.ActivityComponent
-import com.example.radioplayer.ui.screens.exoplayer.RadioPlayerScreen
-import com.example.radioplayer.ui.screens.radio.RadioListScreen
+import com.example.radioplayer.ui.screen.player.RadioPlayerScreen
+import com.example.radioplayer.ui.screen.list.RadioListScreen
 import com.example.radioplayer.util.extension.buildScreenComponent
 
 @Composable

@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.component
+package com.example.radioplayer.ui.screen.view
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

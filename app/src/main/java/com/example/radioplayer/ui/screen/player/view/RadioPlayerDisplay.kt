@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screens.exoplayer.views
+package com.example.radioplayer.ui.screen.player.view
 
 import android.view.WindowManager
 import androidx.compose.runtime.*
