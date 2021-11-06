@@ -30,17 +30,6 @@ class RadioLocalData(private val parser: Parser) {
         emit(radioItemList)
     }
 
-    @Throws(FileNotFoundException::class)
-    fun getRadioItem(title: String): Flow<MediaItem?> = flow {
-        val radioDto = withContext(Dispatchers.IO) {
-            parser.getRadioDto(NAME_MEDIA_JSON_FILE, title)
-        }
-
-        val radioItem = radioDto?.let { buildRadioItem(radioDto) }
-
-        emit(radioItem)
-    }
-
     private fun buildRadioItem(radioDto: RadioDto): MediaItem {
         return MediaItem.Builder()
             .setUri(radioDto.uri)

@@ -14,11 +14,6 @@ class Parser(moshi: Moshi, context: Context) {
     private val parserAdapter: JsonAdapter<List<RadioDto>> = moshi.adapter(listTypes)
 
     @Throws(FileNotFoundException::class)
-    fun getRadioDto(nameFile: String, title: String): RadioDto? {
-        return getRadioDtoList(nameFile)?.first { it -> it.title == title }
-    }
-
-    @Throws(FileNotFoundException::class)
     fun getRadioDtoList(nameFile: String): List<RadioDto>? {
         return parserAdapter.fromJson(readJsonFile(nameFile))
     }
