@@ -15,7 +15,8 @@ data class MainColors(
 )
 
 data class MainTypography(
-    val basic: TextStyle,
+    val heading: TextStyle,
+    val basic: TextStyle
 )
 
 object MainTheme {

@@ -15,6 +15,11 @@ fun MainTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
     }
 
     val typography = MainTypography(
+        heading = TextStyle(
+            fontSize = 30.sp,
+            fontWeight = FontWeight.Normal
+        ),
+
         basic = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.Normal
