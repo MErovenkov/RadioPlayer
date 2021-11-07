@@ -89,8 +89,7 @@ class RadioPlayerService: Service() {
                     }
                 )
             }
-
-
+        
         playerNotificationManager = PlayerNotificationManager
             .Builder(this, NOTIFICATION_ID, NOTIFICATION_CHANNEL_ID)
             .setChannelNameResourceId(R.string.app_name)

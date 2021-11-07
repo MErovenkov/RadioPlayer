@@ -3,7 +3,7 @@ package com.example.radioplayer.ui.exoplayer.service
 import android.app.Notification
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 
-class RadioPlayerNotificationListener(private val musicService: RadioPlayerService)
+class RadioPlayerNotificationListener(private val radioPlayerService: RadioPlayerService)
     : PlayerNotificationManager.NotificationListener {
 
     private var isPlaying = false
@@ -13,7 +13,7 @@ class RadioPlayerNotificationListener(private val musicService: RadioPlayerServi
                                       ongoing: Boolean) {
         isPlaying = when (ongoing) {
             true -> {
-                if (!isPlaying) musicService.play()
+                if (!isPlaying) radioPlayerService.play()
                 true
             }
             false -> false
@@ -22,7 +22,7 @@ class RadioPlayerNotificationListener(private val musicService: RadioPlayerServi
 
     override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
         super.onNotificationCancelled(notificationId, dismissedByUser)
-        musicService.apply {
+        radioPlayerService.apply {
             stopForeground(true)
             stopSelf()
         }
