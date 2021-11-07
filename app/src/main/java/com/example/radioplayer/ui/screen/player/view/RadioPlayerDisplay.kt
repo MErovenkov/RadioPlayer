@@ -1,90 +1,49 @@
 package com.example.radioplayer.ui.screen.player.view
 
-import android.view.WindowManager
+import android.content.*
+import android.content.Context.BIND_AUTO_CREATE
+import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import com.example.radioplayer.ui.MainActivity
-import com.example.radioplayer.util.state.PlayerState
+import com.example.radioplayer.ui.exoplayer.service.RadioPlayerService
+import com.example.radioplayer.ui.exoplayer.service.RadioServiceBinder
 import com.google.android.exoplayer2.*
 
 @Composable
 fun RadioPlayerDisplay(radioItem: MediaItem) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    var audioService: RadioPlayerService? by remember { mutableStateOf(null) }
 
-    val playerState: PlayerState = remember { PlayerState() }
-
-    val exoPlayer = remember {
-        SimpleExoPlayer.Builder(context).build()
-            .apply {
-                addListener(
-                object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        super.onIsPlayingChanged(isPlaying)
-                        playerState.isPlaying.value = isPlaying
-                    }
-
-                    override fun onPlaybackStateChanged(playbackState: Int) {
-                        super.onPlaybackStateChanged(playbackState)
-                        playerState.playbackState.value = playbackState
-                    }
-
-                    override fun onPlayerError(error: PlaybackException) {
-                        super.onPlayerError(error)
-                        playerState.errorCode.value = error.errorCode
-                    }
-                })
+    DisposableEffect(radioItem) {
+        val connection = object: ServiceConnection {
+            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                val binder = service as RadioServiceBinder
+                audioService = binder.service
             }
-    }
 
-    LaunchedEffect(radioItem) {
-        exoPlayer.setMediaItem(radioItem)
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = true
-    }
-
-    DisposableEffect(exoPlayer) {
-        val window = (context as MainActivity).window
-        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-        val lifecycleObserver = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> {
-                    exoPlayer.seekToDefaultPosition()
-                    exoPlayer.play()
-                }
-                Lifecycle.Event.ON_STOP -> exoPlayer.pause()
-                else -> {}
+            override fun onServiceDisconnected(name: ComponentName?) {
+                audioService = null
             }
         }
 
-        lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+        val intent = RadioPlayerService.getNewIntent(context, radioItem)
+
+        context.startService(intent)
+        context.bindService(intent, connection, BIND_AUTO_CREATE)
 
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
-            exoPlayer.release()
-
-            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            context.unbindService(connection)
+            context.stopService(intent)
         }
     }
 
-    RadioPlayerControlView(
-        radioItem.mediaMetadata.title.toString(),
-        playerState
-    ) {
-        when (exoPlayer.isPlaying) {
-            true -> exoPlayer.pause()
-            false -> {
-                if (playerState.errorCode.value != 0) {
-                    exoPlayer.prepare()
-                    playerState.errorCode.value = 0
-                } else {
-                    exoPlayer.seekToDefaultPosition()
-                    exoPlayer.play()
-                }
+    audioService?.let {
+        val playerState = it.exoPlayerState.collectAsState()
+
+        RadioPlayerControlView(playerState = playerState.value) {
+            when (playerState.value.isPlaying) {
+                true -> audioService?.pause()
+                false -> audioService?.play()
             }
         }
     }

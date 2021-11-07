@@ -1,10 +1,12 @@
 package com.example.radioplayer.ui
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.navigation.compose.rememberNavController
 import com.example.radioplayer.di.activity.ActivityComponent
+import com.example.radioplayer.ui.exoplayer.service.RadioPlayerService
 import com.example.radioplayer.ui.navigation.NavigationComponent
 import com.example.radioplayer.ui.theme.MainTheme
 import com.example.radioplayer.ui.theme.baseDarkPalette
@@ -37,5 +39,10 @@ class MainActivity: ComponentActivity(), ActivityComponent.Holder {
                 NavigationComponent(navController, activityComponent)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        stopService(Intent(this, RadioPlayerService::class.java))
     }
 }

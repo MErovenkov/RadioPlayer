@@ -1,8 +1,10 @@
 package com.example.radioplayer.util.state
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.annotation.StringRes
 
-data class PlayerState(val isPlaying: MutableState<Boolean> = mutableStateOf(false),
-                       val playbackState: MutableState<Int> = mutableStateOf(0),
-                       val errorCode: MutableState<Int> = mutableStateOf(0))
+sealed class PlayerState(val isPlaying: Boolean) {
+    class Buffering: PlayerState(false)
+    data class Playing(val radioTitle: String, val musicTitle: String): PlayerState(true)
+    data class Pause(val radioTitle: String, val musicTitle: String): PlayerState(false)
+    data class Error(@StringRes val message: Int): PlayerState(false)
+}

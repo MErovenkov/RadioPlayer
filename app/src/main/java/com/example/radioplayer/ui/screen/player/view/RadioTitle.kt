@@ -1,4 +1,4 @@
-package com.example.radioplayer.ui.screen.view
+package com.example.radioplayer.ui.screen.player.view
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.example.radioplayer.ui.theme.MainTheme
 
 @Composable
-fun RadioTitle(titleRadio: String, titleMusic: String) {
+fun RadioTitle(radioTitle: String, musicTitle: String) {
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center,
@@ -22,7 +22,7 @@ fun RadioTitle(titleRadio: String, titleMusic: String) {
     ) {
         Text(
             modifier = Modifier,
-            text = titleRadio,
+            text = radioTitle,
             textAlign = TextAlign.Center,
             style = MainTheme.typography.heading,
             color = MainTheme.colors.primaryText
@@ -30,7 +30,7 @@ fun RadioTitle(titleRadio: String, titleMusic: String) {
 
         Text(
             modifier = Modifier,
-            text = titleMusic,
+            text = musicTitle,
             textAlign = TextAlign.Center,
             style = MainTheme.typography.basic,
             color = MainTheme.colors.primaryText
@@ -42,8 +42,8 @@ fun RadioTitle(titleRadio: String, titleMusic: String) {
 @Composable
 fun RadioTitlePreview() {
     MainTheme(darkTheme = false) {
-        RadioTitle(titleRadio = "ROCK FM",
-                   titleMusic = "Type O Negative - " +
+        RadioTitle(radioTitle = "ROCK FM",
+                   musicTitle = "Type O Negative - " +
                            "Unsuccessfully Coping With The Natural Beauty Of Infidelity")
     }
 }
