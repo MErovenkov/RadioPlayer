@@ -14,7 +14,7 @@ import com.example.radioplayer.util.state.PlayerState
 import com.example.radioplayer.ui.theme.MainTheme
 
 @Composable
-fun RadioPlayerControlView(playerState: PlayerState, onPlayPause: () -> Unit) {
+fun RadioPlayerControlView(playerState: PlayerState, onPlayPause: (isPlay: Boolean) -> Unit) {
     Surface(color = MainTheme.colors.primaryBackground) {
         Column (
             modifier = Modifier.fillMaxSize(),
@@ -26,7 +26,7 @@ fun RadioPlayerControlView(playerState: PlayerState, onPlayPause: () -> Unit) {
             PlayPauseButton(modifier = Modifier.align(Alignment.End)
                                                .absolutePadding(0.dp, 0.dp, 20.dp, 0.dp),
                             isPlaying = playerState.isPlaying,
-                            onClick = onPlayPause
+                            onClick = { onPlayPause(it) }
             )
         }
     }

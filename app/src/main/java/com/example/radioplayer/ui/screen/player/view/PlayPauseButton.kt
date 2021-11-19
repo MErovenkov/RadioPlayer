@@ -16,7 +16,7 @@ import com.example.radioplayer.R
 import com.example.radioplayer.ui.theme.MainTheme
 
 @Composable
-fun PlayPauseButton(modifier: Modifier, isPlaying: Boolean, onClick: () -> Unit) {
+fun PlayPauseButton(modifier: Modifier, isPlaying: Boolean, onClick: (isPlay: Boolean) -> Unit) {
     Button(
         modifier = modifier
             .width(80.dp)
@@ -28,7 +28,7 @@ fun PlayPauseButton(modifier: Modifier, isPlaying: Boolean, onClick: () -> Unit)
             defaultElevation = 6.dp,
             pressedElevation = 8.dp,
             disabledElevation = 0.dp),
-        onClick = onClick
+        onClick = { onClick(!isPlaying) }
     ) {
         Image(
             painter = painterResource(
