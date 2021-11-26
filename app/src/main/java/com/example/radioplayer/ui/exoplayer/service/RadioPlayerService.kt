@@ -24,13 +24,14 @@ import kotlinx.coroutines.launch
 
 class RadioPlayerService: Service() {
     companion object {
-        const val NOTIFICATION_CHANNEL_NAME = "radioChannel"
-        const val NOTIFICATION_CHANNEL_ID = "radioChannelId"
+        private const val NOTIFICATION_CHANNEL_ID = "radioChannelId"
         private const val NOTIFICATION_ID = 1234
 
         private const val REQUEST_CODE = 0
         private const val ACTION_PLAY_KEY = "actionPlay"
         private const val ACTION_PAUSE_KEY = "actionPause"
+        private const val ACTION_CLOSE_KEY = "actionClose"
+        const val ACTION_TAP_NOTIFICATION_KEY = "actionTapNotification"
 
         private const val TITLE_RADIO_KEY = "titleRadio"
         private const val URI_RADIO_KEY = "uriRadio"
@@ -126,13 +127,14 @@ class RadioPlayerService: Service() {
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                                              NOTIFICATION_CHANNEL_NAME,
+                                              this.resources.getString(R.string.app_name),
                                               NotificationManager.IMPORTANCE_LOW)
 
             (getSystemService(Application.NOTIFICATION_SERVICE)
                     as NotificationManager).createNotificationChannel(channel)
         }
     }
+
     private fun buildNotification() {
         playAction = createNotificationAction(R.drawable.ic_exo_play, ACTION_PLAY_KEY)
         pauseAction = createNotificationAction(R.drawable.ic_exo_pause, ACTION_PAUSE_KEY)
@@ -144,6 +146,8 @@ class RadioPlayerService: Service() {
                 .MediaStyle()
                 .setShowActionsInCompactView(0)
             )
+            .setContentIntent(createServicePendingIntent(ACTION_TAP_NOTIFICATION_KEY))
+            .setDeleteIntent(createServicePendingIntent(ACTION_CLOSE_KEY))
             .setShowWhen(false)
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -154,14 +158,15 @@ class RadioPlayerService: Service() {
     }
 
     private fun createNotificationAction(icon: Int, title: String): NotificationCompat.Action {
-        val pendingIntent = PendingIntent
-            .getService(this,
-                REQUEST_CODE,
-                Intent(this, this::class.java).apply { action = title },
-                getFlagNotification()
-            )
+        return NotificationCompat.Action
+            .Builder(icon, title, createServicePendingIntent(title))
+            .build()
+    }
 
-        return NotificationCompat.Action.Builder(icon, title, pendingIntent).build()
+    private fun createServicePendingIntent(title: String): PendingIntent {
+        return PendingIntent.getService(this, REQUEST_CODE,
+                Intent(this, this::class.java).apply { action = title },
+                getFlagNotification())
     }
 
     private fun getFlagNotification(): Int {
@@ -171,20 +176,28 @@ class RadioPlayerService: Service() {
     }
 
     private fun updateNotification(notificationBuilder: NotificationCompat.Builder,
-                                   state: PlayerState) {
+                                   playerState: PlayerState) {
+
+        var contentTitle = String()
+        val contentText = when (playerState) {
+            is PlayerState.Buffering -> getString(R.string.loading_message)
+            is PlayerState.Error -> getString(playerState.message)
+            is PlayerState.Playing -> {
+                contentTitle = playerState.radioTitle
+                playerState.musicTitle
+            }
+            is PlayerState.Pause -> {
+                contentTitle = playerState.radioTitle
+                playerState.musicTitle
+            }
+        }
+
         with(notificationBuilder) {
             clearActions()
-            setContentTitle(radioTitle)
-            setContentText(
-                when (state) {
-                    is PlayerState.Buffering -> getString(R.string.loading_message)
-                    is PlayerState.Error -> getString(state.message)
-                    is PlayerState.Playing -> state.musicTitle
-                    is PlayerState.Pause -> state.musicTitle
-                }
-            )
+            setContentTitle(contentTitle)
+            setContentText(contentText)
             addAction(
-                when (state.isPlaying) {
+                when (playerState.isPlaying) {
                     true -> pauseAction
                     false -> playAction
                 }
@@ -192,8 +205,8 @@ class RadioPlayerService: Service() {
 
             startForeground(NOTIFICATION_ID, build())
 
-            if (state is PlayerState.Pause
-                || state is PlayerState.Error) stopForeground(false)
+            if (playerState is PlayerState.Pause
+                || playerState is PlayerState.Error) stopForeground(false)
         }
     }
 
@@ -202,6 +215,10 @@ class RadioPlayerService: Service() {
             when (intent.action) {
                 ACTION_PLAY_KEY -> this@RadioPlayerService.play()
                 ACTION_PAUSE_KEY -> this@RadioPlayerService.pause()
+                ACTION_CLOSE_KEY -> stopSelf(startId)
+                ACTION_TAP_NOTIFICATION_KEY -> {
+                    startActivity(MainActivity.getNewIntent(this@RadioPlayerService, radioTitle))
+                }
                 else -> {
                     val newTitleRadio = getStringExtra(TITLE_RADIO_KEY).toString()
 
@@ -247,5 +264,10 @@ class RadioPlayerService: Service() {
                 }
             }
         }
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopSelf()
     }
 }

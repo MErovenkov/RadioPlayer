@@ -12,6 +12,7 @@ import com.example.radioplayer.util.state.UiState
 import com.example.radioplayer.ui.screen.player.view.RadioPlayerDisplay
 import com.example.radioplayer.ui.screen.view.ErrorMessage
 import com.example.radioplayer.ui.screen.view.Loading
+import com.example.radioplayer.util.extension.foregroundStartService
 import com.example.radioplayer.viewmodel.DetailRadioViewModel
 
 @Composable
@@ -42,12 +43,11 @@ fun RadioPlayerScreen(title: String, detailRadioViewModel: DetailRadioViewModel)
 
                 val intent = RadioPlayerService.getNewIntent(context, state.resources)
 
-                context.startService(intent)
+                context.foregroundStartService(intent)
                 context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
 
                 onDispose {
                     context.unbindService(connection)
-                    context.stopService(intent)
                 }
             }
 
