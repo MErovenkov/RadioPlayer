@@ -4,19 +4,17 @@ import android.app.*
 import android.content.Context
 import android.os.IBinder
 import android.net.Uri
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import com.example.radioplayer.R
-import com.example.radioplayer.util.CheckStatusNetwork
 import com.example.radioplayer.util.state.PlayerState
-import com.google.android.exoplayer2.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat as MediaNotificationCompat
 import android.content.Intent
-import androidx.core.app.NotificationManagerCompat
+import com.example.radioplayer.ui.MainActivity
+import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -28,10 +26,11 @@ class RadioPlayerService: Service() {
         private const val NOTIFICATION_ID = 1234
 
         private const val REQUEST_CODE = 0
+        private const val ACTION_INIT_KEY = "actionInit"
         private const val ACTION_PLAY_KEY = "actionPlay"
         private const val ACTION_PAUSE_KEY = "actionPause"
         private const val ACTION_CLOSE_KEY = "actionClose"
-        const val ACTION_TAP_NOTIFICATION_KEY = "actionTapNotification"
+        private const val ACTION_TAP_NOTIFICATION_KEY = "actionTapNotification"
 
         private const val TITLE_RADIO_KEY = "titleRadio"
         private const val URI_RADIO_KEY = "uriRadio"
@@ -41,85 +40,37 @@ class RadioPlayerService: Service() {
                 .apply {
                     putExtra(TITLE_RADIO_KEY, itemRadio.mediaMetadata.title)
                     putExtra(URI_RADIO_KEY, itemRadio.playbackProperties!!.uri.toString())
+                    action = ACTION_INIT_KEY
                 }
         }
     }
+
+    private var radioPlayerHelper: RadioPlayerHelper? = null
 
     private lateinit var playAction: NotificationCompat.Action
     private lateinit var pauseAction: NotificationCompat.Action
     private lateinit var notificationBuilder: NotificationCompat.Builder
 
-    private var exoPlayer: SimpleExoPlayer? = null
-
     private val _exoPlayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Buffering())
     val exoPlayerState: StateFlow<PlayerState> = _exoPlayerState.asStateFlow()
 
-    private val musicTitle: MutableState<String> = mutableStateOf(String())
-    private var radioTitle: String = String()
+    private var contentTitle: String = String()
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        buildNotification()
 
-        exoPlayer = SimpleExoPlayer.Builder(this).build()
-            .apply {
-                addListener(
-                    object : Player.Listener {
-                        override fun onIsPlayingChanged(isPlaying: Boolean) {
-                            super.onIsPlayingChanged(isPlaying)
-                            updateExoPlayerState(playbackState, isPlaying)
-                        }
+        notificationBuilder = createNotificationBuilder()
 
-                        override fun onPlaybackStateChanged(playbackState: Int) {
-                            super.onPlaybackStateChanged(playbackState)
+        playAction = createNotificationAction(R.drawable.ic_exo_play, ACTION_PLAY_KEY)
+        pauseAction = createNotificationAction(R.drawable.ic_exo_pause, ACTION_PAUSE_KEY)
 
-                            if (playbackState == Player.STATE_BUFFERING) {
-                                _exoPlayerState.value = PlayerState.Buffering()
-                            }
-                        }
+        radioPlayerHelper = RadioPlayerHelper(this)
 
-                        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-                            super.onMediaMetadataChanged(mediaMetadata)
-
-                            val musicTitle = when (mediaMetadata.title.isNullOrBlank()) {
-                                true -> ""
-                                false -> mediaMetadata.title.toString()
-                            }
-
-                            this@RadioPlayerService.musicTitle.value = musicTitle
-                            updateExoPlayerState(playbackState, isPlaying)
-                        }
-
-                        override fun onPlayerError(error: PlaybackException) {
-                            super.onPlayerError(error)
-
-                            val message = when (error.errorCode) {
-                                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> {
-                                    if (!CheckStatusNetwork.isActive) R.string.error_no_internet_access
-                                    else R.string.error_radio_station_unavailable
-                                }
-                                PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
-                                    R.string.error_radio_station_connection_timeout
-                                PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND ->
-                                    R.string.error_file_not_found
-                                else -> R.string.error_unknown
-                            }
-
-                            _exoPlayerState.value = PlayerState.Error(message)
-                        }
-                    }
-                )
-            }
-    }
-
-    private fun updateExoPlayerState(playbackState: Int, isPlaying: Boolean) {
-        if (playbackState == Player.STATE_READY) {
-            when (isPlaying) {
-                true -> _exoPlayerState.value =
-                    PlayerState.Playing(radioTitle, this@RadioPlayerService.musicTitle.value)
-                false -> _exoPlayerState.value =
-                    PlayerState.Pause(radioTitle, this@RadioPlayerService.musicTitle.value)
+        CoroutineScope(Dispatchers.IO).launch {
+            radioPlayerHelper?.exoPlayerState?.collect { playerState ->
+                _exoPlayerState.value = playerState
+                updateNotification(notificationBuilder, playerState)
             }
         }
     }
@@ -135,37 +86,15 @@ class RadioPlayerService: Service() {
         }
     }
 
-    private fun buildNotification() {
-        playAction = createNotificationAction(R.drawable.ic_exo_play, ACTION_PLAY_KEY)
-        pauseAction = createNotificationAction(R.drawable.ic_exo_pause, ACTION_PAUSE_KEY)
-        notificationBuilder = NotificationCompat
-            .Builder(this@RadioPlayerService, NOTIFICATION_CHANNEL_ID)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(R.drawable.ic_exo_play)
-            .setStyle(androidx.media.app.NotificationCompat
-                .MediaStyle()
-                .setShowActionsInCompactView(0)
-            )
-            .setContentIntent(createServicePendingIntent(ACTION_TAP_NOTIFICATION_KEY))
-            .setDeleteIntent(createServicePendingIntent(ACTION_CLOSE_KEY))
-            .setShowWhen(false)
-
-        CoroutineScope(Dispatchers.IO).launch {
-            _exoPlayerState.collect { state ->
-                updateNotification(notificationBuilder, state)
-            }
-        }
-    }
-
     private fun createNotificationAction(icon: Int, title: String): NotificationCompat.Action {
         return NotificationCompat.Action
             .Builder(icon, title, createServicePendingIntent(title))
             .build()
     }
 
-    private fun createServicePendingIntent(title: String): PendingIntent {
+    private fun createServicePendingIntent(action: String): PendingIntent {
         return PendingIntent.getService(this, REQUEST_CODE,
-                Intent(this, this::class.java).apply { action = title },
+                Intent(this, this::class.java).apply { this.action = action },
                 getFlagNotification())
     }
 
@@ -175,26 +104,31 @@ class RadioPlayerService: Service() {
         } else PendingIntent.FLAG_UPDATE_CURRENT
     }
 
+    private fun createNotificationBuilder(): NotificationCompat.Builder {
+        return NotificationCompat
+            .Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setSmallIcon(R.drawable.ic_exo_play)
+            .setStyle(MediaNotificationCompat.MediaStyle()
+                .setShowActionsInCompactView(0)
+            )
+            .setContentIntent(createServicePendingIntent(ACTION_TAP_NOTIFICATION_KEY))
+            .setDeleteIntent(createServicePendingIntent(ACTION_CLOSE_KEY))
+            .setShowWhen(false)
+    }
+
     private fun updateNotification(notificationBuilder: NotificationCompat.Builder,
                                    playerState: PlayerState) {
 
-        var contentTitle = String()
         val contentText = when (playerState) {
             is PlayerState.Buffering -> getString(R.string.loading_message)
             is PlayerState.Error -> getString(playerState.message)
-            is PlayerState.Playing -> {
-                contentTitle = playerState.radioTitle
-                playerState.musicTitle
-            }
-            is PlayerState.Pause -> {
-                contentTitle = playerState.radioTitle
-                playerState.musicTitle
-            }
+            is PlayerState.Playing -> playerState.musicTitle
+            is PlayerState.Pause -> playerState.musicTitle
         }
 
         with(notificationBuilder) {
             clearActions()
-            setContentTitle(contentTitle)
             setContentText(contentText)
             addAction(
                 when (playerState.isPlaying) {
@@ -217,22 +151,15 @@ class RadioPlayerService: Service() {
                 ACTION_PAUSE_KEY -> this@RadioPlayerService.pause()
                 ACTION_CLOSE_KEY -> stopSelf(startId)
                 ACTION_TAP_NOTIFICATION_KEY -> {
-                    startActivity(MainActivity.getNewIntent(this@RadioPlayerService, radioTitle))
+                    startActivity(MainActivity
+                        .getNewIntent(this@RadioPlayerService, contentTitle))
                 }
-                else -> {
-                    val newTitleRadio = getStringExtra(TITLE_RADIO_KEY).toString()
+                ACTION_INIT_KEY -> {
+                    contentTitle = getStringExtra(TITLE_RADIO_KEY).toString()
+                    notificationBuilder.setContentTitle(contentTitle)
 
-                    if (radioTitle != newTitleRadio) {
-                        radioTitle = newTitleRadio
-
-                        exoPlayer?.apply {
-                            val uri = Uri.parse(getStringExtra(URI_RADIO_KEY).toString())
-
-                            playWhenReady = true
-                            setMediaItem(MediaItem.fromUri(uri))
-                            prepare()
-                        }
-                    }
+                    radioPlayerHelper?.setRadioItem(contentTitle,
+                        Uri.parse(getStringExtra(URI_RADIO_KEY).toString()))
                 }
             }
         }
@@ -242,32 +169,22 @@ class RadioPlayerService: Service() {
 
     override fun onBind(intent: Intent?): IBinder = RadioServiceBinder(this)
 
-    override fun onDestroy() {
-        super.onDestroy()
-        exoPlayer?.release()
-        exoPlayer = null
-
-        NotificationManagerCompat.from(this).cancelAll()
+    fun play() {
+        radioPlayerHelper?.play()
     }
 
     fun pause() {
-        exoPlayer?.pause()
-    }
-
-    fun play() {
-        when (_exoPlayerState.value) {
-            is PlayerState.Error -> exoPlayer?.prepare()
-            else -> {
-                exoPlayer?.apply {
-                    seekToDefaultPosition()
-                    play()
-                }
-            }
-        }
+        radioPlayerHelper?.pause()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         stopSelf()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        radioPlayerHelper?.release()
+        radioPlayerHelper = null
     }
 }
