@@ -87,8 +87,8 @@ class RadioPlayerHelper(context: Context) {
             radioTitle = newTitleRadio
 
             exoPlayer?.apply {
-                playWhenReady = true
                 setMediaItem(MediaItem.fromUri(radioUri))
+                playWhenReady = true
                 prepare()
             }
         }
