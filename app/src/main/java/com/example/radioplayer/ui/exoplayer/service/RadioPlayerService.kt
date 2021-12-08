@@ -15,10 +15,8 @@ import androidx.media.app.NotificationCompat as MediaNotificationCompat
 import android.content.Intent
 import com.example.radioplayer.ui.MainActivity
 import com.google.android.exoplayer2.MediaItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 class RadioPlayerService: Service() {
     companion object {
@@ -51,6 +49,14 @@ class RadioPlayerService: Service() {
     private lateinit var pauseAction: NotificationCompat.Action
     private lateinit var notificationBuilder: NotificationCompat.Builder
 
+    private val serviceJob: Job = CoroutineScope(Dispatchers.IO)
+        .launch(start = CoroutineStart.LAZY) {
+            radioPlayerHelper?.exoPlayerState?.collect { playerState ->
+                _exoPlayerState.value = playerState
+                updateNotification(notificationBuilder, playerState)
+            }
+        }
+
     private val _exoPlayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Buffering())
     val exoPlayerState: StateFlow<PlayerState> = _exoPlayerState.asStateFlow()
 
@@ -67,12 +73,7 @@ class RadioPlayerService: Service() {
 
         radioPlayerHelper = RadioPlayerHelper(this)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            radioPlayerHelper?.exoPlayerState?.collect { playerState ->
-                _exoPlayerState.value = playerState
-                updateNotification(notificationBuilder, playerState)
-            }
-        }
+        serviceJob.start()
     }
 
     private fun createNotificationChannel() {
@@ -184,6 +185,9 @@ class RadioPlayerService: Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        serviceJob.cancel()
+
         radioPlayerHelper?.release()
         radioPlayerHelper = null
     }
