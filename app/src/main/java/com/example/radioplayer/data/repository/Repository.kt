@@ -14,10 +14,9 @@ class Repository(private val radioLocalData: RadioLocalData) {
 
     @Throws(FileNotFoundException::class)
     fun getRadioItemList(): Flow<List<MediaItem>> = radioLocalData.getRadioItemList()
-        .map {
+        .onEach {
             mutex.withLock(radioList) {
                 radioList = it
-                radioList
             }
         }
         .flowOn(Dispatchers.IO)
