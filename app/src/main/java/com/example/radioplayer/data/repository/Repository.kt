@@ -13,25 +13,32 @@ class Repository(private val radioLocalData: RadioLocalData) {
     private var radioList: List<MediaItem> = emptyList()
 
     @Throws(FileNotFoundException::class)
-    fun getRadioItemList(): Flow<List<MediaItem>> = radioLocalData.getRadioItemList()
-        .onEach {
-            mutex.withLock(radioList) {
-                radioList = it
-            }
+    fun getRadioItemList(): Flow<List<MediaItem>> = flow {
+            emit(mutex.withLock(radioList) {
+                getRadioList()
+            })
         }
         .flowOn(Dispatchers.IO)
 
-    @Suppress("BlockingMethodInNonBlockingContext")
+    @Throws(FileNotFoundException::class)
     fun getRadioItem(title: String): Flow<MediaItem?> = flow {
-            if (radioList.isEmpty()) {
-                getRadioItemList().collect()
-            }
-
             val radioItem: MediaItem? = mutex.withLock(radioList) {
-                radioList.firstOrNull { mediaItem -> mediaItem.mediaMetadata.title == title }
+                getRadioList().firstOrNull { mediaItem -> mediaItem.mediaMetadata.title == title }
             }
 
             emit(radioItem)
         }
         .flowOn(Dispatchers.IO)
+
+    @Suppress("BlockingMethodInNonBlockingContext")
+    private suspend fun getRadioList(): List<MediaItem> = withContext(Dispatchers.IO)  {
+        if (radioList.isEmpty()) {
+            radioLocalData.getRadioItemList()
+                .collect {
+                    radioList = it
+                }
+        }
+
+        return@withContext radioList
+    }
 }
