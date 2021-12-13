@@ -50,6 +50,8 @@ fun RadioStateBox(playerState: PlayerState) {
                                                      musicTitle = playerState.musicTitle)
                 is PlayerState.Pause -> RadioTitle(radioTitle = playerState.radioTitle,
                                                    musicTitle = playerState.musicTitle)
+                is PlayerState.Stop -> RadioTitle(radioTitle = playerState.radioTitle,
+                                                  musicTitle = playerState.musicTitle)
             }
         }
     }

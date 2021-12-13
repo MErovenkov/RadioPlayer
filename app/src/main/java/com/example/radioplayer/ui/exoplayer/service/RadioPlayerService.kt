@@ -126,6 +126,7 @@ class RadioPlayerService: Service() {
             is PlayerState.Error -> getString(playerState.message)
             is PlayerState.Playing -> playerState.musicTitle
             is PlayerState.Pause -> playerState.musicTitle
+            is PlayerState.Stop -> playerState.musicTitle
         }
 
         with(notificationBuilder) {
