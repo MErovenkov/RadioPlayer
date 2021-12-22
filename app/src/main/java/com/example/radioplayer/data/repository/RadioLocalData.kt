@@ -24,7 +24,7 @@ class RadioLocalData(private val parser: Parser) {
         }
 
         val radioItemList = radioDtoList
-            ?.filter { mediaDto -> mediaDto.uri != null }
+            ?.filter { radioDto -> radioDto.uri != null }
             ?.map { radioDto -> buildRadioItem(radioDto) } as List<MediaItem>
 
         emit(radioItemList)
