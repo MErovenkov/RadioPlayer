@@ -33,10 +33,7 @@ class Repository(private val radioLocalData: RadioLocalData) {
     @Suppress("BlockingMethodInNonBlockingContext")
     private suspend fun getRadioList(): List<MediaItem> = withContext(Dispatchers.IO)  {
         if (radioList.isEmpty()) {
-            radioLocalData.getRadioItemList()
-                .collect {
-                    radioList = it
-                }
+            radioList = radioLocalData.getRadioItemList().firstOrNull() ?: emptyList()
         }
 
         return@withContext radioList
