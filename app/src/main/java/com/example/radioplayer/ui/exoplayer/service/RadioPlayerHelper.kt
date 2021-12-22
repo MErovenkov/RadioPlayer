@@ -33,18 +33,27 @@ class RadioPlayerHelper(context: Context) {
         .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
         .build()
 
+    private var audioFocusState: Int = AudioManager.AUDIOFOCUS_GAIN
+
     private val audioFocusRequest: AudioFocusRequestCompat = AudioFocusRequestCompat
         .Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
         .setAudioAttributes(audioAttributes)
         .setWillPauseWhenDucked(true)
-        .setOnAudioFocusChangeListener { focusState ->
-            when (focusState) {
+        .setOnAudioFocusChangeListener { audioFocusChange ->
+            when (audioFocusChange) {
                 AudioManager.AUDIOFOCUS_LOSS -> this.pause()
-                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> this.pause()
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> exoPlayer?.pause()
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> exoPlayer?.volume = 0.3f
 
-                AudioManager.AUDIOFOCUS_GAIN -> exoPlayer?.volume = 1f
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    when (this.audioFocusState) {
+                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> this.play()
+                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> exoPlayer?.volume = 1f
+                    }
+                }
             }
+
+            this.audioFocusState = audioFocusChange
         }
         .build()
 
