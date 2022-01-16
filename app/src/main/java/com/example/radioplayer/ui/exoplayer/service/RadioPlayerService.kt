@@ -37,7 +37,7 @@ class RadioPlayerService: Service() {
             return Intent(context, RadioPlayerService::class.java)
                 .apply {
                     putExtra(TITLE_RADIO_KEY, itemRadio.mediaMetadata.title)
-                    putExtra(URI_RADIO_KEY, itemRadio.playbackProperties!!.uri.toString())
+                    putExtra(URI_RADIO_KEY, itemRadio.localConfiguration!!.uri.toString())
                     action = ACTION_INIT_KEY
                 }
         }

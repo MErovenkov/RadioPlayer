@@ -28,7 +28,7 @@ class RadioPlayerHelper(context: Context) {
         private const val MEDIA_SESSION_TAG = "radioSession"
     }
 
-    private var exoPlayer: SimpleExoPlayer? = null
+    private var exoPlayer: ExoPlayer? = null
 
     private val _exoPlayerState: MutableStateFlow<PlayerState> =
         MutableStateFlow(PlayerState.Buffering())
@@ -101,7 +101,7 @@ class RadioPlayerHelper(context: Context) {
         }
 
     init {
-        exoPlayer = SimpleExoPlayer.Builder(context).build()
+        exoPlayer = ExoPlayer.Builder(context).build()
             .apply {
                 addListener(
                     object : Player.Listener {
