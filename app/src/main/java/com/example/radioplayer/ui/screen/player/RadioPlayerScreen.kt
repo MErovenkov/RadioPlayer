@@ -1,11 +1,11 @@
 package com.example.radioplayer.ui.screen.player
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.ServiceConnection
 import android.os.IBinder
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 import com.example.radioplayer.ui.exoplayer.service.RadioPlayerService
 import com.example.radioplayer.ui.exoplayer.service.RadioServiceBinder
 import com.example.radioplayer.util.state.UiState
@@ -13,14 +13,17 @@ import com.example.radioplayer.ui.screen.player.view.RadioPlayerDisplay
 import com.example.radioplayer.ui.screen.view.ErrorMessage
 import com.example.radioplayer.ui.screen.view.Loading
 import com.example.radioplayer.util.extension.foregroundStartService
-import com.example.radioplayer.viewmodel.DetailRadioViewModel
+import com.example.radioplayer.viewmodel.RadioPlayerViewModel
 
 @Composable
-fun RadioPlayerScreen(title: String, detailRadioViewModel: DetailRadioViewModel) {
-    val viewState = detailRadioViewModel.radioState.collectAsState()
+fun RadioPlayerScreen(navController: NavHostController,
+                      radioTitle: String,
+                      radioPlayerViewModel: RadioPlayerViewModel
+) {
+    val viewState = radioPlayerViewModel.radioState.collectAsState()
 
-    LaunchedEffect(title) {
-        detailRadioViewModel.findRadioItem(title)
+    LaunchedEffect(radioTitle) {
+        radioPlayerViewModel.findRadioItem(radioTitle)
     }
 
     when (val state = viewState.value) {
@@ -39,12 +42,17 @@ fun RadioPlayerScreen(title: String, detailRadioViewModel: DetailRadioViewModel)
                     override fun onServiceDisconnected(name: ComponentName?) {
                         radioPlayerService = null
                     }
+
+                    override fun onNullBinding(name: ComponentName?) {
+                        navController.navigateUp()
+                        super.onNullBinding(name)
+                    }
                 }
 
                 val intent = RadioPlayerService.getNewIntent(context, state.resources)
 
                 context.foregroundStartService(intent)
-                context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                context.bindService(intent, connection, 0)
 
                 onDispose {
                     context.unbindService(connection)

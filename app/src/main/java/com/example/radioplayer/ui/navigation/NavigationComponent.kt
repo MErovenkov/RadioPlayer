@@ -27,7 +27,7 @@ fun NavigationComponent(navController: NavHostController, activityComponent: Act
                     activityComponent.buildScreenComponent().getRadioPlayerViewModel()
                 }
 
-                RadioPlayerScreen(title, radioPlayerViewModel)
+                RadioPlayerScreen(navController, title, radioPlayerViewModel)
             }
         }
 

@@ -47,6 +47,8 @@ class RadioPlayerService: Service() {
 
     private lateinit var playAction: NotificationCompat.Action
     private lateinit var pauseAction: NotificationCompat.Action
+    private lateinit var closeAction: NotificationCompat.Action
+
     private lateinit var notificationBuilder: NotificationCompat.Builder
 
     private val serviceJob: Job = CoroutineScope(Dispatchers.IO)
@@ -64,6 +66,8 @@ class RadioPlayerService: Service() {
 
     override fun onCreate() {
         super.onCreate()
+        closeAction = createNotificationAction(R.drawable.ic_notification_close, ACTION_CLOSE_KEY)
+
         createNotificationChannel()
 
         notificationBuilder = createNotificationBuilder()
@@ -111,8 +115,7 @@ class RadioPlayerService: Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSmallIcon(R.drawable.ic_exo_play)
             .setStyle(MediaNotificationCompat.MediaStyle()
-                .setShowActionsInCompactView(0)
-            )
+                .setShowActionsInCompactView(0, 1))
             .setContentIntent(createServicePendingIntent(ACTION_TAP_NOTIFICATION_KEY))
             .setDeleteIntent(createServicePendingIntent(ACTION_CLOSE_KEY))
             .setShowWhen(false)
@@ -132,6 +135,8 @@ class RadioPlayerService: Service() {
         with(notificationBuilder) {
             clearActions()
             setContentText(contentText)
+
+            addAction(closeAction)
             addAction(
                 when (playerState.isPlaying) {
                     true -> pauseAction
@@ -140,9 +145,6 @@ class RadioPlayerService: Service() {
             )
 
             startForeground(NOTIFICATION_ID, build())
-
-            if (playerState is PlayerState.Pause
-                || playerState is PlayerState.Error) stopForeground(false)
         }
     }
 
