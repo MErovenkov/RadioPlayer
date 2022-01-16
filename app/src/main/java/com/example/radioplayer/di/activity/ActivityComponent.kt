@@ -7,7 +7,7 @@ import dagger.BindsInstance
 import dagger.Subcomponent
 
 @ActivityScope
-@Subcomponent(modules = [SubScreenModule::class, ViewModelModule::class])
+@Subcomponent(modules = [SubScreenModule::class])
 interface ActivityComponent {
     interface Holder {
         val activityComponent: ActivityComponent

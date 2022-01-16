@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.FileNotFoundException
 
-class DetailRadioViewModel(private val repository: Repository): ViewModel() {
+class RadioPlayerViewModel(private val repository: Repository): ViewModel() {
     private val _radioState: MutableStateFlow<UiState<MediaItem>>
             = MutableStateFlow(UiState.Loading)
 

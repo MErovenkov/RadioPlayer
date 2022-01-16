@@ -14,15 +14,22 @@ fun NavigationComponent(navController: NavHostController, activityComponent: Act
 
     NavHost(navController, Navigation.RADIO_LIST_SCREEN) {
         composable(Navigation.RADIO_LIST_SCREEN) {
-            val radioViewModel = activityComponent.buildScreenComponent().getRadioViewModel()
+            val radioViewModel = daggerViewModel {
+                activityComponent.buildScreenComponent().getRadioViewModel()
+            }
 
             RadioListScreen(navController, radioViewModel)
         }
 
-        composable("${Navigation.RADIO_PLAYER_SCREEN}/{title}") {
-            it.arguments?.getString("title")?.let { title ->
-                val detailRadioViewModel = activityComponent
-                    .buildScreenComponent().getDetailRadioViewModel()
+        composable("${Navigation.RADIO_PLAYER_SCREEN}/{radioTitle}") {
+            it.arguments?.getString("radioTitle")?.let { title ->
+                val radioPlayerViewModel = daggerViewModel {
+                    activityComponent.buildScreenComponent().getRadioPlayerViewModel()
+                }
+
+                RadioPlayerScreen(title, radioPlayerViewModel)
+            }
+        }
 
                 RadioPlayerScreen(title, detailRadioViewModel)
             }
