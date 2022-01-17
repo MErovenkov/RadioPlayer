@@ -19,22 +19,20 @@ import com.example.radioplayer.ui.theme.MainTheme
 @Composable
 fun ErrorMessage(@StringRes message: Int) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+           verticalArrangement = Arrangement.Center,
+           horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            modifier = Modifier.size(96.dp),
-            imageVector = Icons.Filled.Warning,
-            tint = MainTheme.colors.errorColor,
-            contentDescription = stringResource(id = R.string.error_message)
+        Icon(modifier = Modifier.size(96.dp),
+             imageVector = Icons.Filled.Warning,
+             tint = MainTheme.colors.error,
+             contentDescription = stringResource(id = R.string.error_message)
         )
 
-        Text(
-            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
-            text = stringResource(id = message),
-            style = MainTheme.typography.basic,
-            color = MainTheme.colors.primaryText,
-            textAlign = TextAlign.Center
+        Text(modifier = Modifier.padding(top = 16.dp, bottom = 24.dp),
+             text = stringResource(id = message),
+             style = MainTheme.typography.basic,
+             color = MainTheme.colors.primaryText,
+             textAlign = TextAlign.Center
         )
     }
 }

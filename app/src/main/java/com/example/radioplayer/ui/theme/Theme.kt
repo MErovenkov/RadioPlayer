@@ -20,9 +20,19 @@ fun MainTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
             fontWeight = FontWeight.Normal
         ),
 
+        headingSmall = TextStyle(
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium
+        ),
+
         basic = TextStyle(
             fontSize = 16.sp,
             fontWeight = FontWeight.Normal
+        ),
+
+        button = TextStyle(
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
         )
     )
 

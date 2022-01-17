@@ -8,15 +8,19 @@ import androidx.compose.ui.text.TextStyle
 data class MainColors(
     val primaryText: Color,
     val primaryBackground: Color,
-    val progressBarColor: Color,
-    val errorColor: Color,
-    val rippleEffectColor: Color,
-    val screenItemBackground: Color
+    val progressBar: Color,
+    val error: Color,
+    val rippleEffect: Color,
+    val screenItemBackground: Color,
+    val divider: Color,
+    val tintIcon: Color
 )
 
 data class MainTypography(
     val heading: TextStyle,
-    val basic: TextStyle
+    val headingSmall: TextStyle,
+    val basic: TextStyle,
+    val button: TextStyle,
 )
 
 object MainTheme {
