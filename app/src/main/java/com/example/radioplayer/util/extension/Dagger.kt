@@ -5,10 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.work.Worker
 import com.example.radioplayer.RadioApplication
 import com.example.radioplayer.di.activity.ActivityComponent
 import com.example.radioplayer.di.application.ApplicationComponent
 import com.example.radioplayer.di.screen.ScreenComponent
+
+fun Worker.getApplicationComponent(): ApplicationComponent {
+    return (this.applicationContext as RadioApplication).applicationComponent
+}
 
 fun Service.getApplicationComponent(): ApplicationComponent {
     return (this.applicationContext as RadioApplication).applicationComponent

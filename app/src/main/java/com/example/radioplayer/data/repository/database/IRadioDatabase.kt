@@ -13,6 +13,10 @@ interface IRadioDatabase {
 
     suspend fun getRadioIdByTitle(radioTitle: String): Long
 
+    fun getRadioDateList(): Flow<List<Radio>>
+
+    suspend fun deleteRadioByTitle(radioTitle: String)
+
     suspend fun insertFavoriteMusic(favoriteMusic: FavoriteMusic): Long
 
     fun getFavoriteMusic(radioTitle: String, musicTitle: String): Flow<FavoriteMusic?>

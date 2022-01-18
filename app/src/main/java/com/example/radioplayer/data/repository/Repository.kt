@@ -57,6 +57,12 @@ class Repository(private val radioJsonData: RadioJsonData,
     fun getRadio(radioTitle: String): Flow<RadioWithFavoriteMusic?> =
         radioDatabase.getRadio(radioTitle).flowOn(Dispatchers.IO)
 
+    fun getRadioDateList(): Flow<List<Radio>> = radioDatabase.getRadioDateList()
+
+    suspend fun deleteRadioByTitle(radioTitle: String) = withContext(Dispatchers.IO) {
+        radioDatabase.deleteRadioByTitle(radioTitle)
+    }
+
     suspend fun createFavoriteMusic(radioTitle: String,
                                     musicTitle: String) = withContext(Dispatchers.IO) {
         var radioId = radioDatabase.getRadioIdByTitle(radioTitle)

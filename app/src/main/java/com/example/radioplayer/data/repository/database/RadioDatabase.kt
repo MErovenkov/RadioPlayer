@@ -26,6 +26,14 @@ abstract class RadioDatabase: RoomDatabase(), IRadioDatabase {
         return radioDao().getRadioIdByTitle(radioTitle)
     }
 
+    override fun getRadioDateList(): Flow<List<Radio>> {
+        return radioDao().getRadioList()
+    }
+
+    override suspend fun deleteRadioByTitle(radioTitle: String) {
+        return radioDao().deleteRadioByTitle(radioTitle)
+    }
+
     override suspend fun insertFavoriteMusic(favoriteMusic: FavoriteMusic): Long {
         return favoriteMusicDao().insert(favoriteMusic)
     }

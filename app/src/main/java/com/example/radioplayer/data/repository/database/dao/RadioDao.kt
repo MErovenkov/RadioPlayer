@@ -14,4 +14,10 @@ abstract class RadioDao: GenericDao<Radio> {
 
     @Query("SELECT id_radio FROM table_radio WHERE title_radio =:radioTitle")
     abstract fun getRadioIdByTitle(radioTitle: String): Long
+
+    @Query("SELECT * FROM table_radio")
+    abstract fun getRadioList(): Flow<List<Radio>>
+
+    @Query("DELETE FROM table_radio WHERE title_radio = :radioTitle")
+    abstract fun deleteRadioByTitle(radioTitle: String)
 }
