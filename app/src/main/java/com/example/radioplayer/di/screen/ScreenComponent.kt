@@ -1,6 +1,7 @@
 package com.example.radioplayer.di.screen
 
 import com.example.radioplayer.viewmodel.RadioPlayerViewModel
+import com.example.radioplayer.viewmodel.FavoriteMusicViewModel
 import com.example.radioplayer.viewmodel.RadioViewModel
 import dagger.Subcomponent
 
@@ -14,4 +15,5 @@ interface ScreenComponent {
 
     fun getRadioViewModel(): RadioViewModel
     fun getRadioPlayerViewModel(): RadioPlayerViewModel
+    fun getFavoriteMusicViewModel(): FavoriteMusicViewModel
 }

@@ -65,4 +65,7 @@ dependencies {
     implementation "com.google.android.exoplayer:extension-mediasession:2.16.1"
     // Moshi-kotlin
     implementation "com.squareup.moshi:moshi-kotlin:1.13.0"
+    // Room
+    implementation "androidx.room:room-ktx:2.4.1"
+    kapt "androidx.room:room-compiler:2.4.1"
 }

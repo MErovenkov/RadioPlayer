@@ -6,27 +6,30 @@ import android.os.IBinder
 import android.net.Uri
 import com.example.radioplayer.R
 import com.example.radioplayer.util.state.PlayerState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat as MediaNotificationCompat
 import android.content.Intent
+import com.example.radioplayer.data.repository.Repository
 import com.example.radioplayer.ui.MainActivity
+import com.example.radioplayer.util.extension.getApplicationComponent
+import com.example.radioplayer.util.state.MusicState
 import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
+import javax.inject.Inject
 
 class RadioPlayerService: Service() {
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "radioChannelId"
         private const val NOTIFICATION_ID = 1234
 
-        private const val REQUEST_CODE = 0
+        private const val REQUEST_CODE = 4
+
         private const val ACTION_INIT_KEY = "actionInit"
         private const val ACTION_PLAY_KEY = "actionPlay"
         private const val ACTION_PAUSE_KEY = "actionPause"
+        private const val ACTION_CHANGE_FAVORITE_MUSIC_KEY = "actionChangeFavoriteMusic"
         private const val ACTION_CLOSE_KEY = "actionClose"
         private const val ACTION_TAP_NOTIFICATION_KEY = "actionTapNotification"
 
@@ -47,6 +50,8 @@ class RadioPlayerService: Service() {
 
     private lateinit var playAction: NotificationCompat.Action
     private lateinit var pauseAction: NotificationCompat.Action
+    private lateinit var favoriteMusicAction: NotificationCompat.Action
+    private lateinit var usualMusicAction: NotificationCompat.Action
     private lateinit var closeAction: NotificationCompat.Action
 
     private lateinit var notificationBuilder: NotificationCompat.Builder
@@ -59,23 +64,31 @@ class RadioPlayerService: Service() {
             }
         }
 
-    private val _exoPlayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState.Buffering())
+    private val _exoPlayerState: MutableStateFlow<PlayerState> = MutableStateFlow(PlayerState
+                                                                                  .Buffering())
     val exoPlayerState: StateFlow<PlayerState> = _exoPlayerState.asStateFlow()
 
     private var contentTitle: String = String()
 
+    @Inject
+    lateinit var repository: Repository
+
     override fun onCreate() {
         super.onCreate()
+        getApplicationComponent().inject(this)
+
+        playAction = createNotificationAction(R.drawable.ic_notification_play, ACTION_PLAY_KEY)
+        pauseAction = createNotificationAction(R.drawable.ic_notification_pause, ACTION_PAUSE_KEY)
+        favoriteMusicAction = createNotificationAction(R.drawable.ic_favorite,
+                                                       ACTION_CHANGE_FAVORITE_MUSIC_KEY)
+        usualMusicAction = createNotificationAction(R.drawable.ic_usual,
+                                                    ACTION_CHANGE_FAVORITE_MUSIC_KEY)
         closeAction = createNotificationAction(R.drawable.ic_notification_close, ACTION_CLOSE_KEY)
 
         createNotificationChannel()
-
         notificationBuilder = createNotificationBuilder()
 
-        playAction = createNotificationAction(R.drawable.ic_exo_play, ACTION_PLAY_KEY)
-        pauseAction = createNotificationAction(R.drawable.ic_exo_pause, ACTION_PAUSE_KEY)
-
-        radioPlayerHelper = RadioPlayerHelper(this)
+        radioPlayerHelper = RadioPlayerHelper(this, repository)
 
         serviceJob.start()
     }
@@ -127,9 +140,9 @@ class RadioPlayerService: Service() {
         val contentText = when (playerState) {
             is PlayerState.Buffering -> getString(R.string.loading_message)
             is PlayerState.Error -> getString(playerState.message)
-            is PlayerState.Playing -> playerState.musicTitle
-            is PlayerState.Pause -> playerState.musicTitle
-            is PlayerState.Stop -> playerState.musicTitle
+            is PlayerState.Playing -> playerState.musicState.musicTitle
+            is PlayerState.Pause -> playerState.musicState.musicTitle
+            is PlayerState.Stop -> playerState.musicState.musicTitle
         }
 
         with(notificationBuilder) {
@@ -144,6 +157,18 @@ class RadioPlayerService: Service() {
                 }
             )
 
+            _exoPlayerState.value.getMusicStateValue().let { musicState ->
+                musicState?.let {
+                    if (it is MusicState.Favorite) {
+                        addAction(favoriteMusicAction)
+                    }
+
+                    if (it is MusicState.Usual) {
+                        addAction(usualMusicAction)
+                    }
+                }
+            }
+
             startForeground(NOTIFICATION_ID, build())
         }
     }
@@ -153,6 +178,7 @@ class RadioPlayerService: Service() {
             when (intent.action) {
                 ACTION_PLAY_KEY -> this@RadioPlayerService.play()
                 ACTION_PAUSE_KEY -> this@RadioPlayerService.pause()
+                ACTION_CHANGE_FAVORITE_MUSIC_KEY -> radioPlayerHelper?.changeFavoriteState()
                 ACTION_CLOSE_KEY -> stopSelf(startId)
                 ACTION_TAP_NOTIFICATION_KEY -> {
                     startActivity(MainActivity
@@ -179,6 +205,10 @@ class RadioPlayerService: Service() {
 
     fun pause() {
         radioPlayerHelper?.pause()
+    }
+
+    fun changeFavoriteState() {
+        radioPlayerHelper?.changeFavoriteState()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

@@ -2,6 +2,7 @@ package com.example.radioplayer.di.application
 
 import android.content.Context
 import com.example.radioplayer.di.activity.ActivityComponent
+import com.example.radioplayer.ui.exoplayer.service.RadioPlayerService
 import dagger.BindsInstance
 import dagger.Component
 import javax.inject.Singleton
@@ -15,4 +16,6 @@ interface ApplicationComponent {
     }
 
     fun activityComponent(): ActivityComponent.Factory
+
+    fun inject(radioPlayerService: RadioPlayerService)
 }

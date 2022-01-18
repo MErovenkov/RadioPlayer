@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 import java.io.FileNotFoundException
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class RadioLocalData(private val parser: Parser) {
+class RadioJsonData(private val parser: Parser) {
 
     companion object {
         private const val NAME_MEDIA_JSON_FILE = "radio.json"

@@ -12,32 +12,36 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.example.radioplayer.R
+import com.example.radioplayer.data.repository.Repository
 import com.example.radioplayer.util.CheckStatusNetwork
+import com.example.radioplayer.util.state.MusicState
 import com.example.radioplayer.util.state.PlayerState
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
 
-class RadioPlayerHelper(context: Context) {
+class RadioPlayerHelper(context: Context, val repository: Repository) {
 
     companion object {
         private const val MEDIA_SESSION_TAG = "radioSession"
     }
 
     private var exoPlayer: ExoPlayer? = null
-
+    // player state
     private val _exoPlayerState: MutableStateFlow<PlayerState> =
         MutableStateFlow(PlayerState.Buffering())
 
     val exoPlayerState: StateFlow<PlayerState> = _exoPlayerState.asStateFlow()
 
     private var radioTitle: String = String()
-    private var musicTitle: String = String()
+    private var musicState: MusicState = MusicState.Other()
+    private var playbackState: Int = Player.STATE_IDLE
+    private var isPlaying: Boolean = false
 
+    private var musicStateUpdateJob: Job? = null
+    private var changeFavoriteJob: Job? = null
+    // audio focus
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     private val audioAttributes: AudioAttributesCompat = AudioAttributesCompat
@@ -69,13 +73,13 @@ class RadioPlayerHelper(context: Context) {
             this.audioFocusState = audioFocusChange
         }
         .build()
-
+    // media session
     private var mediaSession: MediaSessionCompat? = null
     private var mediaSessionConnector: MediaSessionConnector? = null
 
     private val mediaMetadataBuilder = MediaMetadataCompat.Builder()
 
-    private val helperJob: Job = CoroutineScope(Dispatchers.IO)
+    private val mediaProviderUpdateJob: Job = CoroutineScope(Dispatchers.IO)
         .launch(start = CoroutineStart.LAZY) {
             exoPlayerState.collect { playerState ->
                 mediaSessionConnector?.setMediaMetadataProvider {
@@ -90,9 +94,9 @@ class RadioPlayerHelper(context: Context) {
                                 is PlayerState.Error -> context.resources
                                     .getString(playerState.message)
 
-                                is PlayerState.Playing -> playerState.musicTitle
-                                is PlayerState.Pause -> playerState.musicTitle
-                                is PlayerState.Stop -> playerState.musicTitle
+                                is PlayerState.Playing -> playerState.musicState.musicTitle
+                                is PlayerState.Pause -> playerState.musicState.musicTitle
+                                is PlayerState.Stop -> playerState.musicState.musicTitle
                             }
                         )
                         .build()
@@ -107,24 +111,25 @@ class RadioPlayerHelper(context: Context) {
                     object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
                             super.onIsPlayingChanged(isPlaying)
-                            updateExoPlayerState(playbackState, isPlaying)
+                            this@RadioPlayerHelper.isPlaying = isPlaying
+                            updateExoPlayerState()
                         }
 
                         override fun onPlaybackStateChanged(playbackState: Int) {
                             super.onPlaybackStateChanged(playbackState)
-                            updateExoPlayerState(playbackState, isPlaying)
+                            this@RadioPlayerHelper.playbackState = playbackState
+                            updateExoPlayerState()
                         }
 
                         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
                             super.onMediaMetadataChanged(mediaMetadata)
 
-                            val musicTitle = when (mediaMetadata.title.isNullOrBlank()) {
-                                true -> String()
-                                false -> mediaMetadata.title.toString()
+                            when (mediaMetadata.title.isNullOrBlank()) {
+                                true -> musicState = MusicState.Other()
+                                false -> updateMusicState(radioTitle, mediaMetadata.title.toString())
                             }
 
-                            this@RadioPlayerHelper.musicTitle = musicTitle
-                            updateExoPlayerState(playbackState, isPlaying)
+                            updateExoPlayerState()
                         }
 
                         override fun onPlayerError(error: PlaybackException) {
@@ -171,7 +176,7 @@ class RadioPlayerHelper(context: Context) {
                             if (keyEvent.action == KeyEvent.ACTION_UP) {
                                 when (keyEvent.keyCode) {
                                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                                        when (exoPlayer?.isPlaying) {
+                                        when (this@RadioPlayerHelper.isPlaying) {
                                             true -> this@RadioPlayerHelper.pause()
                                             false -> this@RadioPlayerHelper.play()
                                         }
@@ -193,14 +198,39 @@ class RadioPlayerHelper(context: Context) {
             isActive = true
         }
 
-        helperJob.start()
+        mediaProviderUpdateJob.start()
     }
 
-    private fun updateExoPlayerState(playbackState: Int, isPlaying: Boolean) {
+    private fun updateMusicState(radioTitle: String, musicTitle: String) {
+        musicStateUpdateJob?.apply {
+            if (isActive) cancel()
+        }
+
+        if (isMusic(musicTitle)) {
+            musicState = MusicState.Unknown(musicTitle)
+
+            musicStateUpdateJob = CoroutineScope(Dispatchers.IO).launch {
+
+                repository.getFavoriteMusic(radioTitle, musicTitle).collect { favoriteMusic ->
+                    musicState = favoriteMusic?.let {
+                        MusicState.Favorite(musicTitle)
+                    } ?: MusicState.Usual(musicTitle)
+
+                    updateExoPlayerState()
+                }
+            }
+        } else musicState = MusicState.Other(musicTitle)
+    }
+
+    private fun isMusic(musicTitle: String): Boolean {
+        return musicTitle.indexOf("-") != -1
+    }
+
+    private fun updateExoPlayerState() {
         if (playbackState == Player.STATE_READY) {
             when (isPlaying) {
-                true -> _exoPlayerState.value = PlayerState.Playing(radioTitle, musicTitle)
-                false -> _exoPlayerState.value = PlayerState.Pause(radioTitle, musicTitle)
+                true -> _exoPlayerState.value = PlayerState.Playing(radioTitle, musicState)
+                false -> _exoPlayerState.value = PlayerState.Pause(radioTitle, musicState)
             }
         } else if (playbackState == Player.STATE_BUFFERING) {
             _exoPlayerState.value = PlayerState.Buffering()
@@ -248,8 +278,31 @@ class RadioPlayerHelper(context: Context) {
         exoPlayer?.pause()
     }
 
+    fun changeFavoriteState() {
+        changeFavoriteJob?.apply {
+            if (isActive) cancel()
+        }
+        changeFavoriteJob = CoroutineScope(Dispatchers.IO).launch {
+            _exoPlayerState.value.getMusicStateValue()?.let { musicStateValue ->
+                if (musicStateValue is MusicState.Favorite) {
+                    repository.deleteFavoriteMusicByTitle(radioTitle, musicState.musicTitle)
+                } else if (musicStateValue is MusicState.Usual) {
+                    repository.createFavoriteMusic(radioTitle, musicState.musicTitle)
+                }
+
+                updateExoPlayerState()
+            }
+        }
+    }
+
     fun release() {
-        helperJob.cancel()
+        mediaProviderUpdateJob.cancel()
+
+        musicStateUpdateJob?.cancel()
+        musicStateUpdateJob = null
+
+        changeFavoriteJob?.cancel()
+        changeFavoriteJob = null
 
         AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
         exoPlayer?.release()

@@ -17,9 +17,12 @@ import com.example.radioplayer.ui.screen.view.ErrorMessage
 import com.example.radioplayer.util.state.PlayerState
 import com.example.radioplayer.ui.screen.view.Loading
 import com.example.radioplayer.ui.theme.MainTheme
+import com.example.radioplayer.util.state.MusicState
 
 @Composable
-fun RadioStateBox(playerState: PlayerState) {
+fun RadioStateBox(playerState: PlayerState,
+                  onChangeFavorite: (musicState: MusicState) -> Unit
+) {
     var targetValue by remember { mutableStateOf(20.dp) }
 
     val animationProgress by animateDpAsState(
@@ -47,11 +50,17 @@ fun RadioStateBox(playerState: PlayerState) {
                 is PlayerState.Buffering -> Loading()
                 is PlayerState.Error -> ErrorMessage(message = playerState.message)
                 is PlayerState.Playing -> RadioTitle(radioTitle = playerState.radioTitle,
-                                                     musicTitle = playerState.musicTitle)
+                                                     musicState = playerState.musicState,
+                                                     onChangeFavorite = { onChangeFavorite(it) }
+                )
                 is PlayerState.Pause -> RadioTitle(radioTitle = playerState.radioTitle,
-                                                   musicTitle = playerState.musicTitle)
+                                                   musicState = playerState.musicState,
+                                                   onChangeFavorite = { onChangeFavorite(it) }
+                )
                 is PlayerState.Stop -> RadioTitle(radioTitle = playerState.radioTitle,
-                                                  musicTitle = playerState.musicTitle)
+                                                  musicState = playerState.musicState,
+                                                  onChangeFavorite = { onChangeFavorite(it) }
+                )
             }
         }
     }
@@ -62,9 +71,11 @@ fun RadioStateBox(playerState: PlayerState) {
 fun RadioStateBoxPreview() {
     MainTheme(darkTheme = false) {
         RadioStateBox(
-            PlayerState.Playing(radioTitle = "JAZ FM",
-                             musicTitle = "Hiidenpelto including Hapean Hiljaiset Vedet - " +
-                                          "Field Of The Devil include The Silent Waters Of Infamy")
+            playerState = PlayerState
+                .Playing("JAZ FM", MusicState.Usual("Hiidenpelto including " +
+                        "Hapean Hiljaiset Vedet - Field Of The Devil include The Silent Waters Of Infamy")
+            ),
+            onChangeFavorite = { }
         )
     }
 }

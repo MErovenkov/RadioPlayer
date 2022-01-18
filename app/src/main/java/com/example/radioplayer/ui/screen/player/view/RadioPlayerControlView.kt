@@ -12,16 +12,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.radioplayer.util.state.PlayerState
 import com.example.radioplayer.ui.theme.MainTheme
+import com.example.radioplayer.util.state.MusicState
 
 @Composable
-fun RadioPlayerControlView(playerState: PlayerState, onPlayPause: (isPlay: Boolean) -> Unit) {
+fun RadioPlayerControlView(playerState: PlayerState,
+                           onPlayPause: (isPlay: Boolean) -> Unit,
+                           onChangeFavorite: (musicState: MusicState) -> Unit
+) {
     Surface(color = MainTheme.colors.primaryBackground) {
-        Column (
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        Column(modifier = Modifier.fillMaxSize(),
+               verticalArrangement = Arrangement.Center,
+               horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            RadioStateBox(playerState = playerState)
+
+            RadioStateBox(
+                playerState = playerState,
+                onChangeFavorite = { musicState -> onChangeFavorite(musicState) }
+            )
 
             PlayPauseButton(modifier = Modifier.align(Alignment.End)
                                                .absolutePadding(0.dp, 0.dp, 20.dp, 0.dp),
@@ -37,10 +44,9 @@ fun RadioPlayerControlView(playerState: PlayerState, onPlayPause: (isPlay: Boole
 fun RadioPlayerControlViewPreview() {
     MainTheme(darkTheme = false) {
         RadioPlayerControlView(
-                PlayerState.Playing(
-                        radioTitle = "JAZ FM",
-                        musicTitle = "Hiidenpelto including Hapean Hiljaiset Vedet - " +
-                                "Field Of The Devil include The Silent Waters Of Infamy")
-        ) { }
+                playerState = PlayerState.Playing("JAZ FM", MusicState.Other()),
+                onPlayPause = { },
+                onChangeFavorite = { }
+        )
     }
 }

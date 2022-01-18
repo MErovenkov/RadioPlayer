@@ -41,11 +41,7 @@ fun RadioPlayerScreen(navController: NavHostController,
 
                     override fun onServiceDisconnected(name: ComponentName?) {
                         radioPlayerService = null
-                    }
-
-                    override fun onNullBinding(name: ComponentName?) {
                         navController.navigateUp()
-                        super.onNullBinding(name)
                     }
                 }
 
@@ -62,12 +58,20 @@ fun RadioPlayerScreen(navController: NavHostController,
             radioPlayerService?.let {
                 val playerState = it.exoPlayerState.collectAsState()
 
-                RadioPlayerDisplay(playerState.value) { isPlaying ->
-                    when (isPlaying) {
-                        true -> radioPlayerService?.play()
-                        false -> radioPlayerService?.pause()
+                RadioPlayerDisplay(
+                    playerState = playerState.value,
+                    onPlayPause = { isPlaying ->
+                        when (isPlaying) {
+                            true -> radioPlayerService?.play()
+                            false -> radioPlayerService?.pause()
+                        }
+                    },
+                    onChangeFavorite = { musicState ->
+                        if (musicState.isMusic()) {
+                            radioPlayerService?.changeFavoriteState()
+                        }
                     }
-                }
+                )
             }
         }
         is UiState.Error -> ErrorMessage(state.message)

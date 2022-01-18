@@ -1,9 +1,18 @@
 package com.example.radioplayer.util.extension
 
+import android.app.Service
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.radioplayer.RadioApplication
 import com.example.radioplayer.di.activity.ActivityComponent
+import com.example.radioplayer.di.application.ApplicationComponent
 import com.example.radioplayer.di.screen.ScreenComponent
+
+fun Service.getApplicationComponent(): ApplicationComponent {
+    return (this.applicationContext as RadioApplication).applicationComponent
+}
 
 fun ComponentActivity.getActivityComponent(): ActivityComponent {
     return (this.applicationContext as RadioApplication).applicationComponent

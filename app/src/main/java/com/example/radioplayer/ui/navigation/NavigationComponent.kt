@@ -5,9 +5,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.radioplayer.di.activity.ActivityComponent
+import com.example.radioplayer.ui.screen.favoritelist.FavoriteMusicListScreen
 import com.example.radioplayer.ui.screen.player.RadioPlayerScreen
-import com.example.radioplayer.ui.screen.list.RadioListScreen
+import com.example.radioplayer.ui.screen.radiolist.RadioListScreen
 import com.example.radioplayer.util.extension.buildScreenComponent
+import com.example.radioplayer.util.extension.daggerViewModel
+import com.example.radioplayer.viewmodel.FavoriteMusicViewModel
 
 @Composable
 fun NavigationComponent(navController: NavHostController, activityComponent: ActivityComponent) {
@@ -31,7 +34,13 @@ fun NavigationComponent(navController: NavHostController, activityComponent: Act
             }
         }
 
-                RadioPlayerScreen(title, detailRadioViewModel)
+        composable("${Navigation.FAVORITE_MUSIC_LIST_SCREEN}/{radioTitle}") {
+            it.arguments?.getString("radioTitle")?.let { radioTitle ->
+                val favoriteMusicViewModel: FavoriteMusicViewModel = daggerViewModel {
+                    activityComponent.buildScreenComponent().getFavoriteMusicViewModel()
+                }
+
+                FavoriteMusicListScreen(radioTitle, favoriteMusicViewModel)
             }
         }
     }
